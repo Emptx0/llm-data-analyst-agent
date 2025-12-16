@@ -1,2 +1,5 @@
 __pycache__/
 .ipynb_checkpoints/
+test.ipynb
+llm/tools/tools_test.ipynb
+
