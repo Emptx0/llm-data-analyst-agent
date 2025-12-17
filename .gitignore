@@ -4,4 +4,6 @@ __pycache__/
 test.ipynb
 
 llm/tools/tools_test.ipynb
-llm/tools/test_data/1`
+llm/tools/test_data/
+
+*.swp
