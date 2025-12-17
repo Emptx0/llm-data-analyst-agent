@@ -57,9 +57,22 @@ def run_query(user_query: str, max_new_tokens=256, max_steps=10):
 
         # PHASE 2 - TOOL EXECUTION
         if phase == "tool":
-
-            # Force next tool
-            if len(completed_steps) < len(plan):
+            
+            # If all tools are completed - allow final
+            if len(completed_steps) == len(plan):
+                messages.append({
+                    "role": "system",
+                    "content": [{
+                        "type": "text",
+                        "text": (
+                            "ALL TOOLS COMPLETED.\n"
+                            "You MUST now respond with phase='final'.\n"
+                            "Tool usage is FORBIDDEN."
+                        )
+                    }]
+                })
+            else:
+                # Force next tool
                 expected_tool = plan[len(completed_steps)]
 
                 messages.append({
@@ -120,27 +133,16 @@ def run_query(user_query: str, max_new_tokens=256, max_steps=10):
 
                 continue
 
-            # PHASE 3 - FINAL
-            if response_phase == "final":
-                if len(completed_steps) != len(plan):
-                    messages.append({
-                        "role": "system",
-                        "content": [{
-                            "type": "text",
-                            "text": (
-                                "ERROR: You attempted to answer before completing "
-                                "all required tool calls.\n"
-                                "You MUST continue tool execution."
-                            )
-                        }]
-                    })
-                    continue
+        # PHASE 3 - FINAL
+        if phase == "final":
+            llm_output = engine.generate(messages, max_new_tokens)
 
-                return response.get("answer", "").strip()
+            if response.get("phase") != "final":
+                raise RuntimeError(
+                    f"Expected final answer, got phase '{response.get('phase')}'"
+                )
 
-            raise RuntimeError(
-                f"Step {step}: invalid phase '{response_phase}' in tool phase"
-            )
+            return response.get("answer", "").strip()            
 
     raise RuntimeError("Max steps reached without final answer")
 
