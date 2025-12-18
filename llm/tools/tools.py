@@ -128,7 +128,6 @@ def correlation_matrix(
             df.select_dtypes(include="number")
               .drop(columns=[label], errors="ignore")
               .corrwith(df[label])
-              .abs()
               .sort_values(ascending=False)
               .round(3)
               .to_dict()

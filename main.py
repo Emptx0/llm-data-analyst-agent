@@ -4,7 +4,14 @@ from llm import LLMEngine, SYSTEM_PROMPT, TOOLS
 
 engine = LLMEngine("Qwen/Qwen2.5-VL-3B-Instruct")
 
-def run_query(user_query: str, max_new_tokens=256, max_steps=10):
+def run_query(
+        user_query: str, 
+        max_new_tokens_plan=128, 
+        max_new_tokens_tool=128,
+        max_new_tokens_final=512,
+        max_steps=7
+        ) -> str:
+    
     messages = [
         {"role": "system", "content": [{"type": "text", "text": SYSTEM_PROMPT}]},
         {"role": "user", "content": [{"type": "text", "text": user_query}]}
@@ -19,20 +26,20 @@ def run_query(user_query: str, max_new_tokens=256, max_steps=10):
         # PHASE 1 - PLAN
         if phase == "plan":
 
-            llm_output = engine.generate(messages, max_new_tokens)
+            llm_output = engine.generate(messages, max_new_tokens_plan)
 
             # JSON-only
             try:
                 response = json.loads(llm_output)
             except json.JSONDecodeError:
                 raise RuntimeError(
-                    f"Step {step}: model returned non-JSON output:\n{llm_output}"
+                    f"Step {step}, Phase {phase}: model returned non-JSON output:\n{llm_output}"
                 )
 
             response_phase = response.get("phase")
             if response_phase != "plan":
                 raise RuntimeError(
-                    f"Step {step}: expected phase 'plan', got '{response_phase}'"
+                    f"Step {step}, Phase {phase}: expected phase 'plan', got '{response_phase}'"
                 )
 
             plan = response.get("plan")
@@ -89,13 +96,14 @@ def run_query(user_query: str, max_new_tokens=256, max_steps=10):
                     }]
                 })
 
-            llm_output = engine.generate(messages, max_new_tokens)
+            llm_output = engine.generate(messages, max_new_tokens_tool)
 
+            # JSON-only
             try:
                 response = json.loads(llm_output)
             except json.JSONDecodeError:
                 raise RuntimeError(
-                    f"Step {step}: model returned non-JSON output:\n{llm_output}"
+                    f"Step {step}, Phase {phase}: model returned non-JSON output:\n{llm_output}"
                 )
 
             response_phase = response.get("phase")
@@ -135,7 +143,28 @@ def run_query(user_query: str, max_new_tokens=256, max_steps=10):
 
         # PHASE 3 - FINAL
         if phase == "final":
-            llm_output = engine.generate(messages, max_new_tokens)
+            messages.append({
+                "role": "system",
+                "content": [{
+                    "type": "text",
+                    "text": (
+                        "FINAL MODE ACTIVATED.\n"
+                        "You MUST output ONLY valid JSON.\n"
+                        "NO markdown. NO explanations.\n"
+                        "If output is not valid JSON, it will be rejected."
+                    )
+                }]
+            })
+
+            llm_output = engine.generate(messages, max_new_tokens_final)
+            
+            # JSON-only
+            try:
+                response = json.loads(llm_output)
+            except json.JSONDecodeError:
+                raise RuntimeError(
+                    f"Step {step}, Phase {phase}: model returned non-JSON output:\n{llm_output}"
+                )
 
             if response.get("phase") != "final":
                 raise RuntimeError(
