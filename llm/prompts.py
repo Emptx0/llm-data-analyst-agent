@@ -83,4 +83,11 @@ Rules:
 - Respond ONLY with valid JSON
 - Do NOT include markdown, comments, or explanations outside JSON
 - The answer must be complete and not end abruptly
+
+IMPORTANT INVARIANT:
+- Tool outputs are the ONLY source of truth.
+- Numeric values MUST be copied verbatim from tool outputs.
+- You MUST NOT infer, approximate, round, or modify numeric values.
+- If a numeric value was not returned by a tool, you MUST NOT mention it.
 """
+

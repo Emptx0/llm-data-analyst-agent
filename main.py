@@ -36,7 +36,7 @@ def plan_phase(
     plan = response.get("plan")
     if not isinstance(plan, list) or not plan:
         raise ValueError("Plan must be a non-empty list")
-
+    
     # Validate plan tools
     invalid = [t for t in plan if t not in TOOLS]
     if invalid:
@@ -68,33 +68,40 @@ def tool_phase(
     # If all tools are completed - allow final
     if len(completed_steps) == len(plan):
         messages.append({
-            "role": "system",
+            "role": "user",
             "content": [{
                 "type": "text",
                 "text": (
-                    "ALL TOOLS COMPLETED.\n"
-                    "You MUST now respond with phase='final'.\n"
-                    "Tool usage is FORBIDDEN."
+                    "All planned tools have been executed.\n"
+                    "Now respond with phase='final'.\n"
+                    "Do NOT call any tools.\n"
+                    "Use ONLY information obtained from tool outputs.\n"
+                    "Copy numeric values EXACTLY as returned by tools."
                 )
             }]
         })
+
     else:
         # Force next tool
         expected_tool = plan[len(completed_steps)]
 
         messages.append({
-            "role": "system",
+            "role": "user",
             "content": [{
                 "type": "text",
                 "text": (
-                    "NEXT STEP (MANDATORY):\n"
-                    f"You MUST call the tool '{expected_tool}' now.\n"
-                    "You are FORBIDDEN from answering with phase='final'.\n"
-                    "Respond ONLY with valid JSON:\n"
-                    f'{{"phase":"tool","tool":"{expected_tool}","arguments":{{...}}}}'
+                    f"Call the tool '{expected_tool}' now.\n"
+                    "Respond ONLY with valid JSON matching this schema:\n"
+                    "{\n"
+                    '  "phase": "tool",\n'
+                    f'  "tool": "{expected_tool}",\n'
+                    '  "arguments": {}\n'
+                    "}\n"
+                    "Do NOT answer with phase='final'."
                 )
             }]
         })
+
 
     llm_output = engine.generate(messages, max_new_tokens)
 
@@ -154,17 +161,19 @@ def final_phase(
         ) -> str:
 
     messages.append({
-        "role": "system",
+        "role": "user",
         "content": [{
             "type": "text",
             "text": (
-                "FINAL MODE ACTIVATED.\n"
-                "You MUST output ONLY valid JSON.\n"
-                "NO markdown. NO explanations.\n"
-                "If output is not valid JSON, it will be rejected."
+                "All tools are completed.\n"
+                "Now respond with the FINAL answer.\n"
+                "Use ONLY information obtained from tool outputs.\n"
+                "Copy numeric values EXACTLY as returned by tools.\n"
+                "Respond ONLY with valid JSON."
             )
         }]
     })
+
 
     llm_output = engine.generate(messages, max_new_tokens)
     
@@ -221,6 +230,9 @@ def run_query(
                     phase
             )
             
+            if verbose:
+                logger.info(f"Plan: {plan}")
+
             messages.append({
                 "role": "assistant",
                 "content": [{"type": "text", "text": llm_output}]
