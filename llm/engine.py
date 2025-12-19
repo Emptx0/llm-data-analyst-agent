@@ -13,7 +13,7 @@ class LLMEngine:
                 dtype=torch.float16 if torch.cuda.is_available() else torch.float32
                 )
     
-    def generate(self, messages, max_new_tokens)  -> str:
+    def generate(self, messages: list[dict], max_new_tokens: int)  -> str:
         prompt = self.processor.apply_chat_template(
             messages,
             tokenize=False,
