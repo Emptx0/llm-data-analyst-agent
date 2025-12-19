@@ -188,7 +188,6 @@ def run_query(
         verbose=False
         ) -> str:
     
-    global logger
     logger = setup_logger()
 
     messages = [
