@@ -8,6 +8,8 @@ import time
 engine = LLMEngine("Qwen/Qwen2.5-VL-3B-Instruct")
 
 
+# Returns llm response from the system and raw user prompt.
+# Extracts the execution plan from it.
 def plan_phase(
         messages: list[dict],
         max_new_tokens: int,
@@ -46,6 +48,9 @@ def plan_phase(
     return llm_output, plan
 
 
+# If a tool was used in this phase, returns True, the list of completed steps,
+# and the modified messages.
+# Else returns False, the list of completed steps, and the unmodified message.
 def tool_phase(
         messages: list[dict], 
         max_new_tokens: int, 
@@ -140,6 +145,7 @@ def tool_phase(
         return False, completed_steps, messages
 
 
+# Returns final llm response
 def final_phase(
         messages: list[dict],
         max_new_tokens: int,
