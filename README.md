@@ -68,6 +68,10 @@ python cli.py \
 - `--max-new-tokens-final`: (int) Token limit for the final summary
 
 ## Example of usage
+Tested on a laptop with RTX 3050 mobile 4 GB vram. \
+When GPU memory was not enough, the agent automatically fell back to CPU - AMD Ryzen 5 5600H. \
 ![Example](plots/1.jpg)
-Correlation heatmap saved in `polots/` directory.
+\
+Correlation heatmap saved in `polots/` directory. \
 ![Correlation Heatmap](plots/correlation_heatmap_Heart_Disease_Prediction.png)
+
