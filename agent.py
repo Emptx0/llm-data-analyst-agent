@@ -54,7 +54,7 @@ def plan_phase(
     return llm_output, plan
 
 
-# If a tool was used in this phase, returns True, the list of completed steps,
+# If a tool was used in this phase, returns True, the list of completed steps
 # and the modified messages.
 # Else returns False, the list of completed steps, and the unmodified message.
 def tool_phase(
