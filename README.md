@@ -28,42 +28,44 @@ All results used in the final answer come from tool outputs.
 
 ## Model
 You can change the model in `agent.py`:
-```
-engine = LLMEngine("model")
-```
+    ```
+    engine = LLMEngine("model")
+    ```
 
 ## Manual Installation
 1. Clone the repository
-```
-git clone https://github.com/your-username/llm-data-analyst-agent.git
-cd llm-data-analyst-agent
-```
+    ```
+    git clone https://github.com/your-username/llm-data-analyst-agent.git
+    cd llm-data-analyst-agent
+    ```
 
 2. Create and activate a virtual environment
-```
-python3 -m venv .venv
-source .venv/bin/activate
-```
+    ```
+    python3 -m venv .venv
+    source .venv/bin/activate
+    ```
 
 3. Upgrade pip
-```
-pip install --upgrade pip
-```
+    ```
+    pip install --upgrade pip
+    ```
 
 4. Install dependencies
-```
-pip install -r requirements.txt
-```
+    ```
+    pip install -r requirements.txt
+    ```
+    ```md
     This project uses torch and transformers.
     If you want CPU-only installation, install PyTorch manually from:
     https://pytorch.org/get-started/locally/
+    ```
 
 ## Basic usage
-```
-python cli.py \
-    --query "Analyze the dataset and provide a concise exploratory summary." \
-    --path /path/to/dataset.csv \
-```
+    ```
+    python cli.py \
+        --query "Analyze the dataset and provide a concise exploratory summary." \
+        --path /path/to/dataset.csv \
+    ```
 ### Arguments:
 - `--query`: (string) **(required)** Natural language analysis request for the agent
 - `--path`: (string) **(required)** Path to the dataset (CSV or Parquet)
