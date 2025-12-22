@@ -33,7 +33,7 @@ def load_data(path: str) -> dict:
         raise ValueError(f"Unsupported format: {ext}")
 
     DATA_CONTEXT.df = df
-    DATA_CONTEXT.source = path
+    DATA_CONTEXT.path = path
     DATA_CONTEXT.format = fmt
 
     return {
@@ -149,10 +149,11 @@ def correlation_matrix(
         }
 
 
-def plot_correlation_heatmap(path: str) -> dict:
+def plot_correlation_heatmap() -> dict:
     if not DATA_CONTEXT.is_loaded():
         raise RuntimeError("No dataset loaded")
 
+    path = DATA_CONTEXT.path
     dataset_name = Path(path).stem
 
     df = DATA_CONTEXT.df
@@ -170,7 +171,7 @@ def plot_correlation_heatmap(path: str) -> dict:
     )
     plt.title(f"Correlation heatmap ({dataset_name})")
 
-    heatmap_path = f"plots/correlation_heatmap{dataset_name}.png"
+    heatmap_path = f"plots/correlation_heatmap_{dataset_name}.png"
     plt.tight_layout()
     plt.savefig(heatmap_path)
     plt.close()
@@ -231,8 +232,7 @@ def basic_statistics() -> dict:
 
 
 TOOLS = {
-        "load_data": load_data,
-        "dataset_head": dataset_head,
+       "dataset_head": dataset_head,
         "dataset_info": dataset_info,
         "correlation_matrix": correlation_matrix,
         "plot_correlation_heatmap": plot_correlation_heatmap,

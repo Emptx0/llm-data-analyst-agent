@@ -23,7 +23,6 @@ Plan rules (MANDATORY):
 - Each tool may appear AT MOST ONCE in the plan.
 - Do NOT repeat tools.
 - Do NOT create loops or cycles.
-- The plan MUST contain no more than 3 steps.
 - Include ONLY the minimum set of tools required to satisfy the user request.
 - If a tool has already been used for a task, do NOT include it again.
 
@@ -50,13 +49,6 @@ Rules:
 ---
 
 ## ALLOWED TOOLS AND ARGUMENT SCHEMAS
-
-- load_data
-  Arguments:
-  {
-    "path": "<string>"
-  }
-
 - dataset_head
   Arguments:
   {
@@ -96,9 +88,10 @@ Rules:
 
 - plot_correlation_heatmap
   Arguments:
-  {
-    "dataset_name": "<string>"
-  }
+  {}
+  Notes:
+  - The tool saves the generated correlation heatmap as an image file
+  - The plot is automatically saved to a predefined output directory
 
 Rules for ALL tools:
 - You MUST NOT invent or rename arguments

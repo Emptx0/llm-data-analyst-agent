@@ -1,5 +1,5 @@
 import json
-from llm import LLMEngine, SYSTEM_PROMPT, TOOLS
+from llm import LLMEngine, SYSTEM_PROMPT, TOOLS, load_data
 
 from logger import setup_logger
 import time
@@ -204,6 +204,7 @@ def final_phase(
 
 def run_query(
         user_query: str, 
+        dataset_path: str,
         max_new_tokens_plan=128, 
         max_new_tokens_tool=128,
         max_new_tokens_final=512,
@@ -214,6 +215,8 @@ def run_query(
     
     global logger
     logger = setup_logger(verbose)
+
+    load_data(dataset_path)
 
     messages = [
         {"role": "system", "content": [{"type": "text", "text": SYSTEM_PROMPT}]},
@@ -231,7 +234,10 @@ def run_query(
     for step in range(max_steps):
 
         step_start = time.perf_counter()
-        logger.info("Step %d/%d | Phase %s started", step, max_steps, phase)
+        logger.info(
+                "Step %d/%d | Phase '%s' started",
+                step+1, max_steps, phase
+        )
 
         # PHASE 1 - PLAN
         if phase == "plan":
@@ -251,6 +257,13 @@ def run_query(
             })
             
             phase = "tool"
+
+            elapsed = time.perf_counter() - step_start
+            logger.info(
+                    "Step %d/%d | Phase 'plan' finished in %.2f s",
+                    step+1, max_steps, elapsed
+            )
+
             continue
 
         # PHASE 2 - TOOL EXECUTION
@@ -271,6 +284,12 @@ def run_query(
                 if len(completed_steps) == len(plan):
                     phase = "final"
                 
+                elapsed = time.perf_counter() - step_start
+                logger.info(
+                        "Step %d/%d | Phase 'tool' finished in %.2f s",
+                        step+1, max_steps, elapsed
+                )
+
                 continue
 
             else:
@@ -292,12 +311,12 @@ def run_query(
             )
 
             elapsed = time.perf_counter() - step_start
-            logger.info("Step %d | Phase final finished in %.2f s", step, elapsed)
-
+            logger.info(
+                    "Step %d/%d | Phase 'final' finished in %.2f s",
+                    step+1, max_steps, elapsed
+                    )
             return llm_final_output
-        
-        elapsed = time.perf_counter() - step_start
-        logger.info("Step %d | Phase %s finished in %.2f s", step, phase, elapsed)
+    
 
     raise RuntimeError("Max steps reached without final answer")
 

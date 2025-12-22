@@ -13,6 +13,13 @@ def main():
     )
 
     parser.add_argument(
+        "--path",
+        type=str,
+        required=True,
+        help="Dataset path"
+    )
+
+    parser.add_argument(
         "--verbose",
         action="store_true",
         help="Enable verbose logging"
@@ -21,7 +28,7 @@ def main():
     parser.add_argument(
         "--max_steps",
         type=int,
-        default=7
+        default=8
     )
 
     parser.add_argument(
@@ -46,6 +53,7 @@ def main():
 
     result = run_query(
         user_query=args.query,
+        dataset_path=args.path,
         verbose=args.verbose,
         max_steps=args.max_steps,
         max_new_tokens_plan=args.max_new_tokens_plan,

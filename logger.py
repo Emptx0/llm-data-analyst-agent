@@ -9,6 +9,8 @@ def setup_logger(verbose: bool = False) -> logging.Logger:
     )
     
     logger = logging.getLogger("agent")
-    
+ 
+    logger.info("")
+
     return logger
 

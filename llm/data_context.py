@@ -5,7 +5,7 @@ import pandas as pd
 @dataclass
 class DataContext:
     df: pd.DataFrame | None = None
-    source: str | None = None
+    path: str | None = None
     format: str | None = None
 
     def is_loaded(self) -> bool:

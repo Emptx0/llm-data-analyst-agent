@@ -10,7 +10,7 @@ class LLMEngine:
                 model_id,
                 device_map=device_map,
                 offload_buffers=torch.cuda.is_available(), 
-                dtype=torch.float16 if torch.cuda.is_available() else torch.float32
+                dtype=torch.float16
                 )
     
     def generate(self, messages: list[dict], max_new_tokens: int)  -> str:
