@@ -5,6 +5,5 @@ test.ipynb
 llm/tools/tools_test.ipynb
 
 test_data/
-plots/
 
 *.swp
