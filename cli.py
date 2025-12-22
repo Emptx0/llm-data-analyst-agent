@@ -26,7 +26,7 @@ def main():
     )
 
     parser.add_argument(
-        "--max_steps",
+        "--max-steps",
         type=int,
         default=8
     )
