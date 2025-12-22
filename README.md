@@ -26,6 +26,12 @@ The agent currently supports the following tools from `llm/tools/tools.py`:
 - `plot_correlation_heatmap`: Save correlation heatmap as image
 All results used in the final answer come from tool outputs.
 
+## Model
+You can change the model in `agent.py`:
+```
+engine = LLMEngine("model")
+```
+
 ## Manual Installation
 1. Clone the repository
 ```
@@ -68,7 +74,7 @@ python cli.py \
 - `--max-new-tokens-final`: (int) Token limit for the final summary
 
 ## Example of usage
-Tested with `Qwen2.5-VL-3B-Instruct` (I had better results with VL version. Its good for JSONs) \
+Tested with `Qwen2.5-VL-3B-Instruct` *(I had better results with VL version. Its good for JSONs)* \
 on RTX 3050 mobile 4 GB vram. \
 When GPU memory was not enough, the agent automatically fell back to CPU - AMD Ryzen 5 5600H. \
 ![Example](plots/1.jpg)
