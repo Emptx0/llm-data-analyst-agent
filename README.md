@@ -54,10 +54,9 @@ You can change the model in `agent.py`:
     ```
     pip install -r requirements.txt
     ```
-    ```md
-    This project uses torch and transformers.
-    If you want CPU-only installation, install PyTorch manually from:
-    https://pytorch.org/get-started/locally/
+> This project uses torch and transformers.
+  If you want CPU-only installation, install PyTorch manually from:
+  https://pytorch.org/get-started/locally/
     ```
 
 ## Basic usage
