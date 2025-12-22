@@ -45,6 +45,12 @@ def plan_phase(
             f"Allowed: {list(TOOLS.keys())}"
         )
 
+    # Prevent duplicate tools (infinite plans)
+    if len(plan) != len(set(plan)):
+        raise RuntimeError(
+            f"Invalid plan: duplicate tools detected: {plan}"
+        )
+
     return llm_output, plan
 
 
@@ -115,41 +121,44 @@ def tool_phase(
 
     response_phase = response.get("phase")
 
+    if response_phase != "tool":
+        raise RuntimeError(
+            f"Step {step}, Phase {phase}: expected phase 'tool', got '{response_phase}'."
+        )
+
     # Tool call
-    if response_phase == "tool":
-        tool_name = response.get("tool")
+    tool_name = response.get("tool")
 
-        expected_tool = plan[len(completed_steps)]
-        if tool_name != expected_tool:
-            raise RuntimeError(
-                f"Expected tool '{expected_tool}', got '{tool_name}'"
-            )
+    expected_tool = plan[len(completed_steps)]
+    if tool_name != expected_tool:
+        raise RuntimeError(
+            f"Expected tool '{expected_tool}', got '{tool_name}'"
+        )
 
-        args = response.get("arguments", {})
+    args = response.get("arguments", {})
+
+    try:
         result = TOOLS[tool_name](**args)
-
-        completed_steps.append(tool_name)
-
-        # Assistant message
-        messages.append({
-            "role": "assistant",
-            "content": [{"type": "text", "text": llm_output}]
-        })
-
-        # Tool result message
-        messages.append({
-            "role": "tool",
-            "tool_name": tool_name,
-            "content": json.dumps(result)
-        })
-        
-        return True, completed_steps, messages
-
-    else:
-        if verbose:
-            logger.info(f"Expected phase 'tool', got '{response_phase}'")
-
+    except Exception as e:
+        logger.error("Tool %s failed: %s", tool_name, e)
         return False, completed_steps, messages
+
+    completed_steps.append(tool_name)
+
+    # Assistant message
+    messages.append({
+        "role": "assistant",
+        "content": [{"type": "text", "text": llm_output}]
+    })
+
+    # Tool result message
+    messages.append({
+        "role": "tool",
+        "tool_name": tool_name,
+        "content": json.dumps(result)
+    })
+    
+    return True, completed_steps, messages
 
 
 # Returns final llm response
@@ -203,7 +212,8 @@ def run_query(
         verbose=False
         ) -> str:
     
-    logger = setup_logger()
+    global logger
+    logger = setup_logger(verbose)
 
     messages = [
         {"role": "system", "content": [{"type": "text", "text": SYSTEM_PROMPT}]},
@@ -216,13 +226,16 @@ def run_query(
     
     tool_failures = 0
 
+    step_start = None
+
     for step in range(max_steps):
+
+        step_start = time.perf_counter()
+        logger.info("Step %d/%d | Phase %s started", step, max_steps, phase)
 
         # PHASE 1 - PLAN
         if phase == "plan":
             
-            start = time.perf_counter()
-
             llm_output, plan = plan_phase(
                     messages,
                     max_new_tokens_plan,
@@ -230,25 +243,18 @@ def run_query(
                     phase
             )
             
-            if verbose:
-                logger.info(f"Plan: {plan}")
+            logger.info(f"Plan: {plan}")
 
             messages.append({
                 "role": "assistant",
                 "content": [{"type": "text", "text": llm_output}]
             })
             
-            if verbose:
-                elapsed = time.perf_counter() - start
-                logger.info(f"run time: {elapsed:.2f} s | Phase 'plan' done.")
-
             phase = "tool"
             continue
 
         # PHASE 2 - TOOL EXECUTION
         if phase == "tool":
-
-            start = time.perf_counter()
 
             tool_response, completed_steps, messages = tool_phase(
                     messages,
@@ -261,12 +267,8 @@ def run_query(
 
             if tool_response:
                 tool_failures = 0
+                
                 if len(completed_steps) == len(plan):
-                    
-                    if verbose:
-                        elapsed = time.perf_counter() - start
-                        logger.info(f"run time: {elapsed:.2f} s | phase 'tool' done.")
-
                     phase = "final"
                 
                 continue
@@ -274,16 +276,13 @@ def run_query(
             else:
                 tool_failures += 1
                 
-                if verbose:
-                    logger.info(f"Tool failure {tool_failures}.")
+                logger.info(f"Tool failure {tool_failures}.")
 
                 if tool_failures >= max_tool_failures:
                     raise RuntimeError(f"Tool phase failed {max_tool_failures} times.")
 
         # PHASE 3 - FINAL
         if phase == "final":
-            
-            start = time.perf_counter()
             
             llm_final_output = final_phase(
                     messages,
@@ -292,11 +291,13 @@ def run_query(
                     phase
             )
 
-            if verbose:
-                elapsed = time.perf_counter() - start
-                logger.info(f"run time: {elapsed:.2f} s | phase 'final' done.")
+            elapsed = time.perf_counter() - step_start
+            logger.info("Step %d | Phase final finished in %.2f s", step, elapsed)
 
             return llm_final_output
         
+        elapsed = time.perf_counter() - step_start
+        logger.info("Step %d | Phase %s finished in %.2f s", step, phase, elapsed)
+
     raise RuntimeError("Max steps reached without final answer")
 

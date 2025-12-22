@@ -1,7 +1,8 @@
 import pandas as pd
-from pathlib import Path
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+from pathlib import Path
 
 from ..data_context import DATA_CONTEXT
 
@@ -148,9 +149,11 @@ def correlation_matrix(
         }
 
 
-def plot_correlation_heatmap(dataset_name: str) -> dict:
+def plot_correlation_heatmap(path: str) -> dict:
     if not DATA_CONTEXT.is_loaded():
         raise RuntimeError("No dataset loaded")
+
+    dataset_name = Path(path).stem
 
     df = DATA_CONTEXT.df
     num_df = df.select_dtypes(include="number")
@@ -167,15 +170,64 @@ def plot_correlation_heatmap(dataset_name: str) -> dict:
     )
     plt.title(f"Correlation heatmap ({dataset_name})")
 
-    path = f"plots/correlation_heatmap{dataset_name}.png"
+    heatmap_path = f"plots/correlation_heatmap{dataset_name}.png"
     plt.tight_layout()
-    plt.savefig(path)
+    plt.savefig(heatmap_path)
     plt.close()
 
     return {
         "type": "heatmap",
-        "path": path
+        "correlation_heatmap_path": heatmap_path
     }
+
+
+# Analyse missing values
+def missing_values_report() -> dict:
+    if not DATA_CONTEXT.is_loaded():
+        raise RuntimeError("No dataset loaded")
+
+    df = DATA_CONTEXT.df
+    total_rows = len(df)
+
+    missing = df.isna().sum()
+    missing = missing[missing > 0]
+
+    report = {}
+
+    for col, count in missing.items():
+        report[col] = {
+            "missing": int(count),
+            "percent": round((count / total_rows) * 100, 2)
+        }
+
+    return report
+
+
+# Basic statistics
+def basic_statistics() -> dict:
+    if not DATA_CONTEXT.is_loaded():
+        raise RuntimeError("No dataset loaded")
+
+    df = DATA_CONTEXT.df
+    num_df = df.select_dtypes(include="number")
+
+    stats = num_df.describe().to_dict()
+
+    result = {}
+
+    for col, values in stats.items():
+        result[col] = {
+            "count": int(values.get("count", 0)),
+            "mean": round(values.get("mean", 0), 4),
+            "std": round(values.get("std", 0), 4),
+            "min": round(values.get("min", 0), 4),
+            "25%": round(values.get("25%", 0), 4),
+            "50%": round(values.get("50%", 0), 4),
+            "75%": round(values.get("75%", 0), 4),
+            "max": round(values.get("max", 0), 4),
+        }
+
+    return result
 
 
 TOOLS = {
@@ -183,6 +235,8 @@ TOOLS = {
         "dataset_head": dataset_head,
         "dataset_info": dataset_info,
         "correlation_matrix": correlation_matrix,
-        "plot_correlation_heatmap": plot_correlation_heatmap
+        "plot_correlation_heatmap": plot_correlation_heatmap,
+        "missing_values_report": missing_values_report,
+        "basic_statistics": basic_statistics
 }
 

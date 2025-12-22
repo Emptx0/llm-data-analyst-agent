@@ -2,9 +2,9 @@ import logging
 import os
 
 
-def setup_logger() -> logging.Logger:
+def setup_logger(verbose: bool = False) -> logging.Logger:
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.INFO if verbose else logging.WARNING,
         format="%(message)s",
     )
     
