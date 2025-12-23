@@ -17,7 +17,7 @@ This project was built as a pet project to explore:
 
 ## Supported Analysis Tools
 The agent currently supports the following tools from `llm/tools/tools.py`:
-- `load_data`: Load CSV/Parquet dataset
+- `load_data`: Load CSV/Parquet/Excel/JSON/pickle dataset
 - `dataset_head`: Preview first N rows
 - `dataset_info`: Column types and non-null counts
 - `basic_statistics`: Mean, median, std, quartiles for numeric columns
