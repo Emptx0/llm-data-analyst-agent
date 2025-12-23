@@ -58,11 +58,11 @@ You can change the model in `agent.py`:
   https://pytorch.org/get-started/locally/
 
 ## Basic usage
-    ```
-    python cli.py \
-        --query "Analyze the dataset and provide a concise exploratory summary." \
-        --path /path/to/dataset.csv \
-    ```
+```
+python cli.py \
+    --query "Analyze the dataset and provide a concise exploratory summary." \
+    --path /path/to/dataset.csv \
+```
 ### Arguments:
 - `--query`: (string) **(required)** Natural language analysis request for the agent
 - `--path`: (string) **(required)** Path to the dataset (CSV or Parquet)
