@@ -73,7 +73,7 @@ python cli.py \
 - `--max-new-tokens-final`: (int) Token limit for the final summary
 
 ## Example of usage
-Tested with `Qwen2.5-VL-3B-Instruct` *(I had better results with VL version. Its good for JSONs)* \
+Tested with `Qwen2.5-VL-3B-Instruct` *(I had better results without fine-tuning with VL version. Its good for JSONs out of the box)* \
 on RTX 3050 mobile 4 GB vram. \
 When GPU memory was not enough, the agent automatically fell back to CPU - AMD Ryzen 5 5600H. \
 ![Example](plots/1.jpg)
