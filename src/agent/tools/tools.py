@@ -1,0 +1,226 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from pathlib import Path
+
+from src.agent.llm import DATA_CONTEXT
+from src.agent.config import PLOTS_DIR
+
+
+# Data load tool
+def load_data(path: str) -> dict:
+    ext = Path(path).suffix.lower()
+
+    if ext == ".csv":
+        df = pd.read_csv(path)
+        fmt = "csv"
+    else:
+        raise ValueError(f"Unsupported format: {ext}")
+
+    DATA_CONTEXT.df = df
+    DATA_CONTEXT.path = path
+    DATA_CONTEXT.format = fmt
+
+    return {
+        "rows": len(df),
+        "columns": len(df.columns)
+    }
+
+
+# Dataset head tool
+def dataset_head(n: int = 5) -> list[dict]:
+    if not DATA_CONTEXT.is_loaded():
+        raise RuntimeError("No dataset loaded")
+
+    return DATA_CONTEXT.df.head(n).to_dict(orient="records")
+
+
+# Dataset info tool
+def dataset_info(max_top_values: int = 5) -> dict:
+    if not DATA_CONTEXT.is_loaded():
+        raise RuntimeError("No dataset loaded")
+
+    df = DATA_CONTEXT.df
+
+    n_rows = len(df)
+    n_cols = len(df.columns)
+    missed_values = df.isna().sum().sum()
+    missing_pct = round((missed_values / (n_rows * n_cols)) * 100, 2)
+    columns_info = {}
+
+    for col in df.columns:
+        s = df[col]
+
+        n_missing = int(s.isna().sum())
+        col_missing_pct = round(n_missing / n_rows * 100, 2)
+        n_unique = int(s.nunique(dropna=True))
+
+        if pd.api.types.is_numeric_dtype(s):
+            semantic = "numeric"
+            top_values = None
+        else:
+            semantic = "categorical"
+            top_values = (
+                s.value_counts(dropna=True)
+                 .head(max_top_values)
+                 .to_dict()
+            )
+
+        columns_info[col] = {
+            "dtype": str(s.dtype),
+            "n_missing": n_missing,
+            "col_missing_pct": col_missing_pct,
+            "n_unique": n_unique,
+            "semantic_type": semantic,
+            **({"top_values": top_values} if top_values else {})
+        }
+
+    return {
+        "rows": n_rows,
+        "n_columns": len(df.columns),
+        "missing_pct": missing_pct,
+        "columns": columns_info
+    }
+
+
+# Correlation matrix and correlation heatmap tools
+def correlation_matrix(
+    threshold: float = 0.2,
+    label: str = None
+) -> dict:
+
+    if not DATA_CONTEXT.is_loaded():
+        raise RuntimeError("No dataset loaded")
+
+    df = DATA_CONTEXT.df
+    num_df = df.select_dtypes(include="number")
+    corr = num_df.corr()
+
+    pairs = []
+    for i, col1 in enumerate(corr.columns):
+        for col2 in corr.columns[i+1:]:
+            value = corr.loc[col1, col2]
+            if abs(value) >= threshold:
+                pairs.append({
+                    "feature_1": col1,
+                    "feature_2": col2,
+                    "correlation": round(float(value), 3)
+                })
+
+    if label and label in df.columns and pd.api.types.is_numeric_dtype(df[label]):
+        feature_target_corr = (
+            df.select_dtypes(include="number")
+              .drop(columns=[label], errors="ignore")
+              .corrwith(df[label])
+              .sort_values(ascending=False)
+              .round(3)
+              .to_dict()
+        )
+
+        return {
+            "threshold": threshold,
+            "matrix": corr.round(3).to_dict(),
+            "feature_target_abs_corr": feature_target_corr,
+            "high_correlation_pairs": pairs
+        }
+    
+    else:
+        return {
+            "threshold": threshold,
+            "matrix": corr.round(3).to_dict(),
+            "high_correlation_pairs": pairs
+        }
+
+
+def plot_correlation_heatmap() -> dict:
+    if not DATA_CONTEXT.is_loaded():
+        raise RuntimeError("No dataset loaded")
+
+    path = DATA_CONTEXT.path
+    dataset_name = Path(path).stem
+
+    df = DATA_CONTEXT.df
+    num_df = df.select_dtypes(include="number")
+    corr = num_df.corr()
+
+    Path("plots").mkdir(exist_ok=True)
+
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(
+        corr,
+        annot=True,
+        cmap="coolwarm",
+        center=0,
+    )
+    plt.title(f"Correlation heatmap ({dataset_name})")
+
+    heatmap_path = f"{PLOTS_DIR}/correlation_heatmap_{dataset_name}.png"
+    plt.tight_layout()
+    plt.savefig(heatmap_path)
+    plt.close()
+
+    return {
+        "type": "heatmap",
+        "correlation_heatmap_path": heatmap_path
+    }
+
+
+# Analyse missing values
+def missing_values_report() -> dict:
+    if not DATA_CONTEXT.is_loaded():
+        raise RuntimeError("No dataset loaded")
+
+    df = DATA_CONTEXT.df
+    total_rows = len(df)
+
+    missing = df.isna().sum()
+    missing = missing[missing > 0]
+
+    report = {}
+
+    for col, count in missing.items():
+        report[col] = {
+            "missing": int(count),
+            "percent": round((count / total_rows) * 100, 2)
+        }
+
+    return report
+
+
+# Basic statistics
+def basic_statistics() -> dict:
+    if not DATA_CONTEXT.is_loaded():
+        raise RuntimeError("No dataset loaded")
+
+    df = DATA_CONTEXT.df
+    num_df = df.select_dtypes(include="number")
+
+    stats = num_df.describe().to_dict()
+
+    result = {}
+
+    for col, values in stats.items():
+        result[col] = {
+            "count": int(values.get("count", 0)),
+            "mean": round(values.get("mean", 0), 4),
+            "std": round(values.get("std", 0), 4),
+            "min": round(values.get("min", 0), 4),
+            "25%": round(values.get("25%", 0), 4),
+            "50%": round(values.get("50%", 0), 4),
+            "75%": round(values.get("75%", 0), 4),
+            "max": round(values.get("max", 0), 4),
+        }
+
+    return result
+
+
+TOOLS = {
+       "dataset_head": dataset_head,
+        "dataset_info": dataset_info,
+        "correlation_matrix": correlation_matrix,
+        "plot_correlation_heatmap": plot_correlation_heatmap,
+        "missing_values_report": missing_values_report,
+        "basic_statistics": basic_statistics
+}
+
