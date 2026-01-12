@@ -61,7 +61,7 @@ def main():
         max_new_tokens_final=args.max_new_tokens_final,
     )
 
-    print(f"\n{result}")
+    print(f"{result}")
 
 
 if __name__ == "__main__":

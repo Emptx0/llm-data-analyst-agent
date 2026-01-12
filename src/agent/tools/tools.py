@@ -5,7 +5,7 @@ import seaborn as sns
 from pathlib import Path
 
 from src.agent.llm import DATA_CONTEXT
-from src.agent.config import PLOTS_DIR
+from src.config import PLOTS_DIR
 
 
 # Data load tool

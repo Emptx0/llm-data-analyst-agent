@@ -20,7 +20,23 @@ def plan_phase(
         phase: str
         ) -> tuple[str, list]:
 
-    llm_output = engine.generate(messages, max_new_tokens)
+    output = engine.generate(messages, max_new_tokens)
+
+    llm_output = output["output"]
+
+    # Metrics logging
+    latency = output["latency"]
+    tps = output["tokens_per_sec"]
+    max_memory_allocated = output["max_memory_allocated"]
+   
+    logger.info(
+            "\tlatency: %.2f s\n"
+            "\ttokens/second: %.2f\n"
+            "\tmax GPU memory allocated: %.2f GB",
+            latency,
+            tps,
+            max_memory_allocated,
+    )
 
     # JSON-only
     try:
@@ -39,7 +55,7 @@ def plan_phase(
     plan = response.get("plan")
     if not isinstance(plan, list) or not plan:
         raise ValueError("Plan must be a non-empty list")
-    
+ 
     # Validate plan tools
     invalid = [t for t in plan if t not in TOOLS]
     if invalid:
@@ -112,7 +128,23 @@ def tool_phase(
         })
 
 
-    llm_output = engine.generate(messages, max_new_tokens)
+    output = engine.generate(messages, max_new_tokens)
+    
+    llm_output = output["output"]
+    
+    # Metrics logging
+    latency = output["latency"]
+    tps = output["tokens_per_sec"]
+    max_memory_allocated = output["max_memory_allocated"]
+   
+    logger.info(
+            "\tlatency: %.2f s\n"
+            "\ttokens/second: %.2f\n"
+            "\tmax GPU memory allocated: %.2f GB",
+            latency,
+            tps,
+            max_memory_allocated,
+    )
 
     # JSON-only
     try:
@@ -144,6 +176,7 @@ def tool_phase(
         result = TOOLS[tool_name](**args)
     except Exception as e:
         logger.error("Tool %s failed: %s", tool_name, e)
+ 
         return False, completed_steps, messages
 
     completed_steps.append(tool_name)
@@ -186,9 +219,24 @@ def final_phase(
         }]
     })
 
+    output = engine.generate(messages, max_new_tokens)
 
-    llm_output = engine.generate(messages, max_new_tokens)
-    
+    llm_output = output["output"]
+
+    # Metrics logging
+    latency = output["latency"]
+    tps = output["tokens_per_sec"]
+    max_memory_allocated = output["max_memory_allocated"]
+   
+    logger.info(
+            "\tlatency: %.2f s\n"
+            "\ttokens/second: %.2f\n"
+            "\tmax GPU memory allocated: %.2f GB",
+            latency,
+            tps,
+            max_memory_allocated,
+    )
+
     # JSON-only
     try:
         response = json.loads(llm_output)
@@ -240,9 +288,8 @@ def run_query(
 
     for step in range(max_steps):
 
-        step_start = time.perf_counter()
         logger.info(
-                "Step %d/%d | Phase '%s' started",
+                "\nStep %d/%d | Phase '%s' started",
                 step+1, max_steps, phase
         )
 
@@ -264,13 +311,6 @@ def run_query(
             })
             
             phase = "tool"
-
-            elapsed = time.perf_counter() - step_start
-            logger.info(
-                    "Step %d/%d | Phase 'plan' finished in %.2f s",
-                    step+1, max_steps, elapsed
-            )
-
             continue
 
         # PHASE 2 - TOOL EXECUTION
@@ -290,13 +330,6 @@ def run_query(
                 
                 if len(completed_steps) == len(plan):
                     phase = "final"
-                
-                elapsed = time.perf_counter() - step_start
-                logger.info(
-                        "Step %d/%d | Phase 'tool' finished in %.2f s",
-                        step+1, max_steps, elapsed
-                )
-
                 continue
 
             else:
@@ -317,11 +350,6 @@ def run_query(
                     phase
             )
 
-            elapsed = time.perf_counter() - step_start
-            logger.info(
-                    "Step %d/%d | Phase 'final' finished in %.2f s",
-                    step+1, max_steps, elapsed
-                    )
             return llm_final_output
     
 
