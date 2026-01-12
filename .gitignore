@@ -1,12 +1,10 @@
 __pycache__/
 .ipynb_checkpoints/
 
-test.ipynb
-llm/tools/tools_test.ipynb
-
-test_data/
+plots/
 temp_data/
+test_data/
 
+*.ipynb
 *.swp
 
-.env
