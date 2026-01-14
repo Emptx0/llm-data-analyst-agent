@@ -32,7 +32,7 @@ def plan_phase(
     logger.info(
             "\tlatency: %.2f s\n"
             "\ttokens/second: %.2f\n"
-            "\tmax GPU memory allocated: %.2f GB",
+            "\tmax_memory_allocated: %.2f GB",
             latency,
             tps,
             max_memory_allocated,
@@ -140,7 +140,7 @@ def tool_phase(
     logger.info(
             "\tlatency: %.2f s\n"
             "\ttokens/second: %.2f\n"
-            "\tmax GPU memory allocated: %.2f GB",
+            "\tmax_memory_allocated: %.2f GB",
             latency,
             tps,
             max_memory_allocated,
@@ -169,6 +169,8 @@ def tool_phase(
         raise RuntimeError(
             f"Expected tool '{expected_tool}', got '{tool_name}'"
         )
+    
+    logger.info("Tool: %s", tool_name)
 
     args = response.get("arguments", {})
 
@@ -176,7 +178,6 @@ def tool_phase(
         result = TOOLS[tool_name](**args)
     except Exception as e:
         logger.error("Tool %s failed: %s", tool_name, e)
- 
         return False, completed_steps, messages
 
     completed_steps.append(tool_name)
@@ -231,7 +232,7 @@ def final_phase(
     logger.info(
             "\tlatency: %.2f s\n"
             "\ttokens/second: %.2f\n"
-            "\tmax GPU memory allocated: %.2f GB",
+            "\tmax_memory_allocated: %.2f GB",
             latency,
             tps,
             max_memory_allocated,
@@ -284,10 +285,9 @@ def run_query(
     
     tool_failures = 0
 
-    step_start = None
+    step_start = time.perf_counter()
 
     for step in range(max_steps):
-
         logger.info(
                 "\nStep %d/%d | Phase '%s' started",
                 step+1, max_steps, phase
@@ -349,6 +349,12 @@ def run_query(
                     step,
                     phase
             )
+
+            elapsed = time.perf_counter() - step_start
+            logger.info(
+                    "\nTotal time: %.2f s\n",
+                    elapsed
+                    )
 
             return llm_final_output
     

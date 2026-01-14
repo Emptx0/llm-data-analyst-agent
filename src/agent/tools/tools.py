@@ -10,13 +10,18 @@ from src.config import PLOTS_DIR
 
 # Data load tool
 def load_data(path: str) -> dict:
-    ext = Path(path).suffix.lower()
+    fmt = Path(path).suffix.lower()
 
-    if ext == ".csv":
+    if fmt != ".csv":
+        raise ValueError(f"Unsupported format: {fmt}")
+
+    try:
         df = pd.read_csv(path)
-        fmt = "csv"
-    else:
-        raise ValueError(f"Unsupported format: {ext}")
+    except Exception as e:
+        raise RuntimeError(f"Failed to read CSV: {path}") from e
+
+    if df.empty:
+        raise ValueError("CSV is empty")
 
     DATA_CONTEXT.df = df
     DATA_CONTEXT.path = path
