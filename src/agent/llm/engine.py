@@ -5,13 +5,13 @@ import time
 
 
 class LLMEngine:
-    def __init__(self, model_id: str, device_map: str = 'auto'):
+    def __init__(self, model_id: str, device_map: str = 'auto', offload_buffers=True):
         self.processor = AutoProcessor.from_pretrained(model_id)
         
         self.model = AutoModelForImageTextToText.from_pretrained(
                 model_id,
                 device_map=device_map,
-                offload_buffers=torch.cuda.is_available(), 
+                offload_buffers=offload_buffers, 
                 dtype=torch.float16
                 )
     
@@ -30,10 +30,11 @@ class LLMEngine:
             return_tensors="pt"
         ).to(self.model.device)
         
-        with torch.no_grad():
+        with torch.inference_mode():
            output = self.model.generate(
            **inputs,
            max_new_tokens=max_new_tokens,
+           use_cache=True
            )
     
         prompt_len = inputs["input_ids"].shape[-1]

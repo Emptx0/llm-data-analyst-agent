@@ -32,7 +32,7 @@ def plan_phase(
     logger.info(
             "\tlatency: %.2f s\n"
             "\ttokens/second: %.2f\n"
-            "\tmax_memory_allocated: %.2f GB",
+            "\tmax GPU memory allocated: %.2f GB",
             latency,
             tps,
             max_memory_allocated,
@@ -140,7 +140,7 @@ def tool_phase(
     logger.info(
             "\tlatency: %.2f s\n"
             "\ttokens/second: %.2f\n"
-            "\tmax_memory_allocated: %.2f GB",
+            "\tmax GPU memory allocated: %.2f GB",
             latency,
             tps,
             max_memory_allocated,
@@ -232,7 +232,7 @@ def final_phase(
     logger.info(
             "\tlatency: %.2f s\n"
             "\ttokens/second: %.2f\n"
-            "\tmax_memory_allocated: %.2f GB",
+            "\tmax GPU memory allocated: %.2f GB",
             latency,
             tps,
             max_memory_allocated,
