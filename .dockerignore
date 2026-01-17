@@ -1,0 +1,10 @@
+__pycache__/
+.ipynb_checkpoints/
+
+temp_data/
+test_data/
+
+*.ipynb
+*.swp
+
+.git
